@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/module08-question01/module08-question01.iml" filepath="$PROJECT_DIR$/module08-question01/module08-question01.iml" />
+      <module fileurl="file://$PROJECT_DIR$/module08-question02/module08-question02.iml" filepath="$PROJECT_DIR$/module08-question02/module08-question02.iml" />
+      <module fileurl="file://$PROJECT_DIR$/module08-question03/module08-question03.iml" filepath="$PROJECT_DIR$/module08-question03/module08-question03.iml" />
+      <module fileurl="file://$PROJECT_DIR$/module08-question04/module08-question04.iml" filepath="$PROJECT_DIR$/module08-question04/module08-question04.iml" />
+      <module fileurl="file://$PROJECT_DIR$/module08-question05/module08-question05.iml" filepath="$PROJECT_DIR$/module08-question05/module08-question05.iml" />
+      <module fileurl="file://$PROJECT_DIR$/module08-question06/module08-question06.iml" filepath="$PROJECT_DIR$/module08-question06/module08-question06.iml" />
+      <module fileurl="file://$PROJECT_DIR$/module08-question07/module08-question07.iml" filepath="$PROJECT_DIR$/module08-question07/module08-question07.iml" />
+      <module fileurl="file://$PROJECT_DIR$/module08-question08/module08-question08.iml" filepath="$PROJECT_DIR$/module08-question08/module08-question08.iml" />
+    </modules>
+  </component>
+</project>

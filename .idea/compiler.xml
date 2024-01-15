@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="module08-question07" />
+        <module name="module08-question08" />
+        <module name="module08-question05" />
+        <module name="module08-question06" />
+        <module name="module08-question03" />
+        <module name="module08-question04" />
+        <module name="module08-question01" />
+        <module name="module08-question02" />
+      </profile>
+    </annotationProcessing>
+  </component>
+</project>

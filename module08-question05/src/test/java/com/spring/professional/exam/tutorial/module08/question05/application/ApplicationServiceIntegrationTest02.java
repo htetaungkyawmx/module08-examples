@@ -1,0 +1,203 @@
+package com.spring.professional.exam.tutorial.module08.question05.application;
+
+import com.spring.professional.exam.tutorial.module08.question05.configuration.ApplicationConfiguration;
+import com.spring.professional.exam.tutorial.module08.question05.ds.BookingResult;
+import com.spring.professional.exam.tutorial.module08.question05.ds.Guest;
+import com.spring.professional.exam.tutorial.module08.question05.ds.Reservation;
+import com.spring.professional.exam.tutorial.module08.question05.ds.Room;
+import com.spring.professional.exam.tutorial.module08.question05.repository.ReservationRepository;
+import com.spring.professional.exam.tutorial.module08.question05.repository.RoomRepository;
+import com.spring.professional.exam.tutorial.module08.question05.service.GuestSharableDataService;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
+
+import java.time.LocalDate;
+import java.util.Set;
+
+import static com.spring.professional.exam.tutorial.module08.question05.configuration.TestDataConfiguration.*;
+import static com.spring.professional.exam.tutorial.module08.question05.ds.BookingResult.BookingState.NO_ROOM_AVAILABLE;
+import static com.spring.professional.exam.tutorial.module08.question05.ds.BookingResult.BookingState.ROOM_BOOKED;
+import static org.easymock.EasyMock.*;
+import static org.fest.assertions.api.Assertions.assertThat;
+import static org.junit.Assert.*;
+
+@RunWith(SpringRunner.class)
+@ContextConfiguration(classes = ApplicationConfiguration.class)
+@ActiveProfiles("easymock")
+// not part of EasyMock Framework, this is only to activate right Mock configuration (ApplicationServiceIntegrationTestMockConfiguration)
+public class ApplicationServiceIntegrationTest02 {
+
+    private static final String JOHN = "John";
+    private static final String DOE = "Doe";
+    private static final LocalDate DATE_2020_JULY_20 = LocalDate.of(2020, 7, 20);
+    private static final String SHARABLE_DATA = "FirstName1 LastName1, FirstName2 LastName2";
+
+    @Autowired
+    private ApplicationService applicationService;
+    @Autowired
+    private RoomRepository roomRepository;
+    @Autowired
+    private ReservationRepository reservationRepository;
+
+    // This mock is created inside ApplicationServiceIntegrationTestMockConfiguration with usage of Mockito
+    // if you are using Spring Boot, consider usage of @MockBean annotation
+    @Autowired
+    private GuestSharableDataService guestSharableDataServiceMock;
+
+    @Test
+    @DirtiesContext
+    public void shouldFetchGuestSharableData() {
+        expect(guestSharableDataServiceMock.getGuestSharableData()).andReturn(SHARABLE_DATA);
+
+        replay(guestSharableDataServiceMock);
+
+        String guestSharableData = applicationService.getGuestSharableData();
+
+        verify(guestSharableDataServiceMock);
+
+        assertEquals(SHARABLE_DATA, guestSharableData);
+    }
+
+    @Test
+    @DirtiesContext
+    public void shouldBookAnyRoomForNewGuest() {
+        BookingResult bookingResult = applicationService.bookAnyRoomForNewGuest(JOHN, DOE, DATE_2020_JULY_20);
+
+        assertReservationAcceptedAndSaved(bookingResult, DATE_2020_JULY_20);
+        assertGuestRegisteredCorrectly(bookingResult, JOHN, DOE);
+    }
+
+    @Test
+    @DirtiesContext
+    public void shouldRegisterGuest() {
+        Guest registerGuest = applicationService.registerGuest(JOHN, DOE);
+
+        assertGuestRegisteredCorrectly(registerGuest, JOHN, DOE);
+    }
+
+    @Test
+    @DirtiesContext
+    public void shouldBookAnyRoomForRegisteredGuest() {
+        Guest registerGuest = applicationService.registerGuest(JOHN, DOE);
+        BookingResult bookingResult = applicationService.bookAnyRoomForRegisteredGuest(registerGuest, DATE_2020_JULY_20);
+
+        assertReservationAcceptedAndSaved(bookingResult, DATE_2020_JULY_20);
+    }
+
+    @Test
+    @DirtiesContext
+    public void shouldRejectReservationWhenNoRoomsAvailable() {
+        roomRepository.deleteAll();
+
+        BookingResult bookingResult = applicationService.bookAnyRoomForNewGuest(JOHN, DOE, DATE_2020_JULY_20);
+
+        assertReservationRejected(bookingResult);
+    }
+
+    @Test
+    @DirtiesContext
+    public void shouldRejectReservationWhenAllRoomsBooked() {
+        Guest registerGuest = applicationService.registerGuest(JOHN, DOE);
+
+        BookingResult bookingResult1 = applicationService.bookSpecificRoomForRegisteredGuest(registerGuest, GREEN_ROOM, DATE_2020_JULY_20);
+        BookingResult bookingResult2 = applicationService.bookSpecificRoomForRegisteredGuest(registerGuest, YELLOW_ROOM, DATE_2020_JULY_20);
+        BookingResult bookingResult3 = applicationService.bookSpecificRoomForRegisteredGuest(registerGuest, BLUE_ROOM, DATE_2020_JULY_20);
+
+        BookingResult bookingResult = applicationService.bookAnyRoomForRegisteredGuest(registerGuest, DATE_2020_JULY_20);
+
+        assertReservationRejected(bookingResult);
+
+        assertReservationForSpecificRoom(bookingResult1, GREEN_ROOM);
+        assertReservationForSpecificRoom(bookingResult2, YELLOW_ROOM);
+        assertReservationForSpecificRoom(bookingResult3, BLUE_ROOM);
+
+        assertReservationAcceptedAndSaved(bookingResult1, DATE_2020_JULY_20);
+        assertReservationAcceptedAndSaved(bookingResult2, DATE_2020_JULY_20);
+        assertReservationAcceptedAndSaved(bookingResult3, DATE_2020_JULY_20);
+    }
+
+    @Test
+    @DirtiesContext
+    public void shouldBookSpecificRoom() {
+        Guest registerGuest = applicationService.registerGuest(JOHN, DOE);
+        BookingResult bookingResult = applicationService.bookSpecificRoomForRegisteredGuest(registerGuest, YELLOW_ROOM, DATE_2020_JULY_20);
+
+        assertReservationAccepted(bookingResult);
+        assertReservationForSpecificRoom(bookingResult, YELLOW_ROOM);
+        assetReservationAtDate(bookingResult, DATE_2020_JULY_20);
+        assertReservationSaved(bookingResult, getReservationFromRepository(bookingResult));
+    }
+
+    private void assertReservationAcceptedAndSaved(BookingResult bookingResult, LocalDate date) {
+        assertReservationAccepted(bookingResult);
+        assetReservationAtDate(bookingResult, date);
+        assertRoomReservedFromAvailableRooms(bookingResult, roomRepository.findAll());
+        assertReservationSaved(bookingResult, getReservationFromRepository(bookingResult));
+    }
+
+    private void assertReservationAccepted(BookingResult bookingResult) {
+        assertEquals(ROOM_BOOKED, bookingResult.getBookingState());
+        assertTrue(bookingResult.getReservation().isPresent());
+        assertNotNull(bookingResult.getReservation().get().getId());
+    }
+
+    private void assertReservationRejected(BookingResult bookingResult) {
+        assertEquals(NO_ROOM_AVAILABLE, bookingResult.getBookingState());
+        assertFalse(bookingResult.getReservation().isPresent());
+    }
+
+    private void assetReservationAtDate(BookingResult bookingResult, LocalDate expectedReservationDate) {
+        LocalDate reservationDate = bookingResult.getReservation().orElseThrow().getReservationDate();
+
+        assertEquals(expectedReservationDate, reservationDate);
+    }
+
+    private void assertGuestRegisteredCorrectly(BookingResult bookingResult, String firstName, String lastName) {
+        Guest guest = bookingResult.getReservation().orElseThrow().getGuest();
+
+        assertGuestRegisteredCorrectly(guest, firstName, lastName);
+    }
+
+    private void assertGuestRegisteredCorrectly(Guest guest, String firstName, String lastName) {
+        assertNotNull(guest.getId());
+        assertEquals(firstName, guest.getFirstName());
+        assertEquals(lastName, guest.getLastName());
+    }
+
+    private void assertRoomReservedFromAvailableRooms(BookingResult bookingResult, Set<Room> availableRooms) {
+        Room reservedRoom = bookingResult.getReservation().orElseThrow().getRoom();
+
+        assertThat(availableRooms)
+                .contains(reservedRoom);
+    }
+
+    private Reservation getReservationFromRepository(BookingResult bookingResult) {
+        return reservationRepository.findById(bookingResult.getReservation().orElseThrow().getId()).orElseThrow();
+    }
+
+    private void assertReservationSaved(BookingResult bookingResult, Reservation savedReservation) {
+        assertEquals(bookingResult.getReservation().orElseThrow(), savedReservation);
+    }
+
+    private void assertReservationForSpecificRoom(BookingResult bookingResult, String roomName) {
+        assertEquals(roomName, bookingResult.getReservation().orElseThrow().getRoom().getName());
+    }
+
+    @Configuration
+    @Profile("easymock")
+    public static class ApplicationServiceIntegrationTestMockConfiguration {
+
+        @Bean
+        public GuestSharableDataService guestSharableDataService() {
+            return mock(GuestSharableDataService.class);
+        }
+    }
+}
