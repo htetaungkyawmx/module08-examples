@@ -1,10 +1,9 @@
 package com.spring.professional.exam.tutorial.module08.question02.ds;
 
+import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-
-import javax.persistence.*;
 
 @Entity
 @Getter

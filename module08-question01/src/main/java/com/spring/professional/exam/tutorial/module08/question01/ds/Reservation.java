@@ -1,10 +1,10 @@
 package com.spring.professional.exam.tutorial.module08.question01.ds;
 
+import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.UUID;
 
